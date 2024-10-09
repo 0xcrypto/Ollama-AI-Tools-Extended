@@ -17,10 +17,11 @@ jobs:
         with:
           node-version: "18.x"
 
-      - name: Build plugin
-        run: |
-          npm install
-          npm run build
+      - name: Install dependencies
+        run: npm install
+
+      - name: Compile TypeScript
+        run: tsc
 
       - name: Create release
         env:
@@ -31,4 +32,4 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --draft \
-            main.js manifest.json styles.css
+            main.js manifest.json
