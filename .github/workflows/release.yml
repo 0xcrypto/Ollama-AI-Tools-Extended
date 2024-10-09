@@ -21,7 +21,7 @@ jobs:
         run: npm install
 
       - name: Compile TypeScript
-        run: tsc
+        run: tsc main.ts --outFile main.js
 
       - name: Create release
         env:
@@ -32,4 +32,4 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --draft \
-            main.js manifest.json
+            main.js manifest.json README.md
