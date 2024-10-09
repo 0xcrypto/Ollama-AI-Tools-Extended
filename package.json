@@ -1,7 +1,7 @@
 {
-  "name": "ai-obsidian-plugin",
-  "version": "1.0.0",
-  "description": "AI Plugin for Obsidian",
+  "name": "ollama-ai-tools",
+  "version": "1.0.9",
+  "description": "Ollama AI Tools",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

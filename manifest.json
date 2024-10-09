@@ -1,7 +1,7 @@
 {
-  "id": "obsidian-ollama-ai",
-  "name": "Obsidian Ollama AI",
-  "version": "1.0.8",
+  "id": "ollama-ai-tools",
+  "name": "Ollama AI Tools",
+  "version": "1.0.9",
   "minAppVersion": "0.15.0",
   "description": "This is a plugin integrates the power of Ollama's AI models directly into Obsidian, providing a seamless way to enhance your notes and writing process. Whether you need help expanding on ideas, improving the quality of your text, or creating internal links for concepts, this plugin brings the capabilities of Ollama AI to your fingertips within the Obsidian environment.",
   "author": "jakedx6",
