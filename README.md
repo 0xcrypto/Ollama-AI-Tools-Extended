@@ -1,4 +1,4 @@
-# Obsidian Ollama AI Plugin
+# Obsidian Ollama AI Plugin (Extended)
 
 ## Plugin Name: **Obsidian Ollama AI**
 
@@ -12,6 +12,9 @@ The **Ollama Enhance** plugin integrates the power of Ollama's AI models directl
 - **Make Text Concise**: Summarize or shorten your highlighted text to make it more concise.
 - **Summarize Highlighted Text**: Quickly generate a summary for the highlighted section.
 - **Obsidian Smart Link**: Identify key concepts, places, people, and things in your highlighted text and wrap them in double brackets (`[[ ]]`) to create links within Obsidian.
+
+## Extended Features
+- **Text completion**: Currently experimental, you can complete your sentences with AI. (Best works with granite3-dense)
 
 ### Installation
 1. Clone or download this plugin into your Obsidian vault's `.obsidian/plugins` directory.

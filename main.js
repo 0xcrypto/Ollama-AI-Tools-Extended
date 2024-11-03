@@ -62,6 +62,7 @@ var OllamaPlugin = /** @class */ (function (_super) {
     function OllamaPlugin() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.settings = DEFAULT_SETTINGS;
+        _this.ghostTextDiv = null;
         return _this;
     }
     OllamaPlugin.prototype.onload = function () {
@@ -77,6 +78,11 @@ var OllamaPlugin = /** @class */ (function (_super) {
                             id: 'ollama-expand',
                             name: 'Expand Highlighted Text',
                             editorCallback: function (editor) { return _this.handleAIAction(editor, 'expand'); }
+                        });
+                        this.addCommand({
+                            id: 'ollama-complete',
+                            name: 'Complete the Sentence',
+                            editorCallback: function (editor) { return _this.handleAIAction(editor, 'complete'); }
                         });
                         this.addCommand({
                             id: 'ollama-answer',
@@ -110,20 +116,26 @@ var OllamaPlugin = /** @class */ (function (_super) {
     };
     OllamaPlugin.prototype.handleAIAction = function (editor, action) {
         return __awaiter(this, void 0, void 0, function () {
-            var selectedText, prompt, response, responseText, data, aiResponse, error_1;
+            var selectedText, cursorPos, prompt, response, responseText, data, aiResponse, lastMatched, word, index, matchedIndex, matchText, matchResponse, goodResponse, error_1;
             var _a, _b, _c, _d;
             return __generator(this, function (_e) {
                 switch (_e.label) {
                     case 0:
-                        selectedText = editor.getSelection();
-                        if (!selectedText) {
-                            new obsidian_1.Notice('Please highlight some text first.');
-                            return [2 /*return*/];
+                        selectedText = '';
+                        cursorPos = editor.getCursor();
+                        if (editor.somethingSelected()) {
+                            selectedText = editor.getSelection();
+                        }
+                        else {
+                            selectedText = editor.getRange({ line: cursorPos.line, ch: 0 }, cursorPos);
                         }
                         prompt = '';
                         switch (action) {
                             case 'expand':
                                 prompt = "Expand the following text:\n\n\"".concat(selectedText, "\"\n\nReturn only the expanded content without any additional explanation in markdown format.");
+                                break;
+                            case 'complete':
+                                prompt = "Complete the following sentence without adding any additional instructions or explanations: \"".concat(selectedText, "\"");
                                 break;
                             case 'improve':
                                 prompt = "Improve the following text:\n\n\"".concat(selectedText, "\"\n\nReturn only the improved content without any additional explanation in markdown format.");
@@ -176,12 +188,53 @@ var OllamaPlugin = /** @class */ (function (_super) {
                             new obsidian_1.Notice('Failed to parse the response from Ollama. Please ensure the server is returning valid JSON.');
                             return [2 /*return*/];
                         }
-                        aiResponse = data.response;
+                        aiResponse = data.response.replace(/^"|"$/g, '').trim();
                         if (!aiResponse || aiResponse.length === 0) {
                             new obsidian_1.Notice('AI response is empty. Please try again.');
                             return [2 /*return*/];
                         }
-                        this.showResponseOptions(editor, selectedText, aiResponse);
+                        if (action !== "complete") {
+                            this.showResponseOptions(editor, selectedText, aiResponse);
+                        }
+                        else {
+                            if (!editor.somethingSelected()) {
+                                lastMatched = null;
+                                word = '';
+                                for (index = 0; index < aiResponse.length; index++) {
+                                    word += aiResponse[index];
+                                    matchedIndex = selectedText.indexOf(word);
+                                    if (matchedIndex !== -1) {
+                                        lastMatched = matchedIndex;
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                }
+                                if (lastMatched !== null) {
+                                    new obsidian_1.Notice('Matched from the middle of the line. Replacing the text from the middle.');
+                                    editor.replaceRange(aiResponse, {
+                                        line: cursorPos.line,
+                                        ch: lastMatched
+                                    }, editor.getCursor());
+                                }
+                                else {
+                                    // nothing matched. Just append the response
+                                    editor.setValue(editor.getValue() + aiResponse);
+                                }
+                            }
+                            else {
+                                matchText = selectedText.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
+                                matchResponse = aiResponse.replace(/[^a-zA-Z0-9\s]/g, '').toLowerCase();
+                                goodResponse = matchResponse.startsWith(matchText) ? aiResponse : false;
+                                if (goodResponse) {
+                                    editor.replaceSelection(goodResponse !== null && goodResponse !== void 0 ? goodResponse : '');
+                                }
+                                else {
+                                    new obsidian_1.Notice(aiResponse);
+                                    return [2 /*return*/];
+                                }
+                            }
+                        }
                         return [3 /*break*/, 5];
                     case 4:
                         error_1 = _e.sent();
@@ -192,6 +245,31 @@ var OllamaPlugin = /** @class */ (function (_super) {
                 }
             });
         });
+    };
+    OllamaPlugin.prototype.showGhostText = function (suggestion, editor) {
+        var cursor = editor.getCursor();
+        if (!this.ghostTextDiv) {
+            this.ghostTextDiv = document.createElement("div");
+            this.ghostTextDiv.className = "ghost-text";
+            this.ghostTextDiv.style.position = "absolute";
+            this.ghostTextDiv.style.opacity = "0.5"; // Ghostly appearance
+            this.ghostTextDiv.style.pointerEvents = "none"; // Avoid interference with clicks
+            this.ghostTextDiv.style.color = "#AAA"; // Light gray color for ghost text
+            document.body.appendChild(this.ghostTextDiv);
+        }
+        // Set the suggestion text
+        this.ghostTextDiv.textContent = suggestion;
+        // Position the ghost text div near the cursor
+        // @ts-ignore 
+        var cursorCoords = editor.cm.coordsAtPos(editor.posToOffset(cursor));
+        this.ghostTextDiv.style.top = "".concat(cursorCoords.top, "px");
+        this.ghostTextDiv.style.left = "".concat(cursorCoords.left, "px");
+    };
+    OllamaPlugin.prototype.hideGhostText = function () {
+        if (this.ghostTextDiv) {
+            this.ghostTextDiv.remove();
+            this.ghostTextDiv = null;
+        }
     };
     OllamaPlugin.prototype.showResponseOptions = function (editor, originalText, aiResponse) {
         var modal = new OllamaResponseModal(this.app, aiResponse, function (action) {

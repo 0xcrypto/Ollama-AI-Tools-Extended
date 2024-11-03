@@ -8,5 +8,5 @@
       "outDir": "./dist"
     },
     "include": ["main.ts"]
-  }
+}
   
